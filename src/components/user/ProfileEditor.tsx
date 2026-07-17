@@ -107,7 +107,7 @@ export function ProfileEditor({ token, user, onUserUpdated }: ProfileEditorProps
 
       <button
         className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-[#cad3c2] px-4 text-sm font-semibold text-[#263323] transition hover:bg-[#f4f6f0] disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={updateMutation.isPending || !phoneIsValid || !documentIsValid}
+        disabled={updateMutation.isPending}
       >
         {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         Salvar dados

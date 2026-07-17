@@ -126,7 +126,7 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
 
         <button
           className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#21321d] px-4 text-sm font-semibold text-white transition hover:bg-[#314629] disabled:cursor-not-allowed disabled:opacity-70"
-          disabled={authMutation.isPending || !documentIsValid || !phoneIsValid}
+          disabled={authMutation.isPending}
         >
           {authMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
