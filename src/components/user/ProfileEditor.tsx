@@ -20,10 +20,13 @@ export function ProfileEditor({ token, user, onUserUpdated }: ProfileEditorProps
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
   const normalizedPhone = useMemo(() => normalizeBrazilPhone(form.phone), [form.phone]);
   const normalizedDocument = useMemo(() => normalizeDocument(form.document), [form.document]);
   const phoneIsValid = isValidBrazilPhone(form.phone);
   const documentIsValid = isValidCpfOrCnpj(form.document);
+  const showDocumentError = submitted && !documentIsValid;
+  const showPhoneError = submitted && !phoneIsValid;
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -49,6 +52,7 @@ export function ProfileEditor({ token, user, onUserUpdated }: ProfileEditorProps
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    setSubmitted(true);
     setMessage('');
     setError('');
 
@@ -72,25 +76,31 @@ export function ProfileEditor({ token, user, onUserUpdated }: ProfileEditorProps
       <TextField
         label="CPF ou CNPJ"
         value={form.document}
-        onChange={(document) => setForm({ ...form, document: maskDocument(document) })}
+        onChange={(document) => {
+          setSubmitted(false);
+          setError('');
+          setMessage('');
+          setForm({ ...form, document: maskDocument(document) });
+        }}
         required
         inputMode="numeric"
         placeholder="000.000.000-00"
       />
-      <p className={`text-xs ${documentIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
-        Use um CPF ou CNPJ válido.
-      </p>
+      {showDocumentError && <p className="text-xs text-[#9b321d]">Use um CPF ou CNPJ válido.</p>}
       <TextField
         label="Telefone"
         value={form.phone}
-        onChange={(phone) => setForm({ ...form, phone: maskBrazilPhone(phone) })}
+        onChange={(phone) => {
+          setSubmitted(false);
+          setError('');
+          setMessage('');
+          setForm({ ...form, phone: maskBrazilPhone(phone) });
+        }}
         required
         inputMode="numeric"
         placeholder="(11) 99999-9999"
       />
-      <p className={`text-xs ${phoneIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
-        Use DDD+número, com 10 a 11 dígitos.
-      </p>
+      {showPhoneError && <p className="text-xs text-[#9b321d]">Use DDD+número, com 10 a 11 dígitos.</p>}
 
       {error && <p className="rounded-md bg-[#fff2ee] px-3 py-2 text-sm text-[#9b321d]">{error}</p>}
       {message && <p className="rounded-md bg-[#edf7e8] px-3 py-2 text-sm text-[#38572e]">{message}</p>}

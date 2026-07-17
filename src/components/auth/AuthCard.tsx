@@ -22,8 +22,11 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
     document: '',
     phone: '',
   });
+  const [submitted, setSubmitted] = useState(false);
   const documentIsValid = mode === 'login' || isValidCpfOrCnpj(form.document);
   const phoneIsValid = mode === 'login' || isValidBrazilPhone(form.phone);
+  const showDocumentError = submitted && mode === 'register' && !documentIsValid;
+  const showPhoneError = submitted && mode === 'register' && !phoneIsValid;
 
   const authMutation = useMutation({
     mutationFn: () =>
@@ -42,6 +45,7 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    setSubmitted(true);
     setError('');
 
     if (mode === 'register' && !documentIsValid) {
@@ -83,25 +87,29 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
             <TextField
               label="CPF ou CNPJ"
               value={form.document}
-              onChange={(document) => setForm({ ...form, document: maskDocument(document) })}
+              onChange={(document) => {
+                setSubmitted(false);
+                setError('');
+                setForm({ ...form, document: maskDocument(document) });
+              }}
               required
               inputMode="numeric"
               placeholder="000.000.000-00"
             />
-            <p className={`text-xs ${documentIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
-              Use um CPF ou CNPJ válido.
-            </p>
+            {showDocumentError && <p className="text-xs text-[#9b321d]">Use um CPF ou CNPJ válido.</p>}
             <TextField
               label="Telefone"
               value={form.phone}
-              onChange={(phone) => setForm({ ...form, phone: maskBrazilPhone(phone) })}
+              onChange={(phone) => {
+                setSubmitted(false);
+                setError('');
+                setForm({ ...form, phone: maskBrazilPhone(phone) });
+              }}
               required
               inputMode="numeric"
               placeholder="(11) 99999-9999"
             />
-            <p className={`text-xs ${phoneIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
-              Use DDD+número, com 10 a 11 dígitos.
-            </p>
+            {showPhoneError && <p className="text-xs text-[#9b321d]">Use DDD+número, com 10 a 11 dígitos.</p>}
           </>
         )}
         <TextField label="E-mail" value={form.email} onChange={(email) => setForm({ ...form, email })} required type="email" />
