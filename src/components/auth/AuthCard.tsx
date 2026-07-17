@@ -2,6 +2,8 @@ import { FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { AuthResponse, login, register } from '../../api';
+import { isValidCpfOrCnpj, maskDocument, normalizeDocument } from '../../utils/document';
+import { isValidBrazilPhone, maskBrazilPhone, normalizeBrazilPhone } from '../../utils/phone';
 import { TextField } from '../ui/TextField';
 
 type AuthMode = 'login' | 'register';
@@ -20,6 +22,8 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
     document: '',
     phone: '',
   });
+  const documentIsValid = mode === 'login' || isValidCpfOrCnpj(form.document);
+  const phoneIsValid = mode === 'login' || isValidBrazilPhone(form.phone);
 
   const authMutation = useMutation({
     mutationFn: () =>
@@ -29,8 +33,8 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
             email: form.email,
             password: form.password,
             name: form.name,
-            document: form.document,
-            phone: form.phone,
+            document: normalizeDocument(form.document),
+            phone: normalizeBrazilPhone(form.phone),
           }),
     onSuccess: onAuthenticated,
     onError: (err) => setError(err instanceof Error ? err.message : 'Não foi possível autenticar.'),
@@ -39,6 +43,17 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
   function submit(event: FormEvent) {
     event.preventDefault();
     setError('');
+
+    if (mode === 'register' && !documentIsValid) {
+      setError('Informe um CPF ou CNPJ válido.');
+      return;
+    }
+
+    if (mode === 'register' && !phoneIsValid) {
+      setError('Telefone deve ter DDD+número, com 10 a 11 dígitos.');
+      return;
+    }
+
     authMutation.mutate();
   }
 
@@ -68,10 +83,25 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
             <TextField
               label="CPF ou CNPJ"
               value={form.document}
-              onChange={(document) => setForm({ ...form, document })}
+              onChange={(document) => setForm({ ...form, document: maskDocument(document) })}
               required
+              inputMode="numeric"
+              placeholder="000.000.000-00"
             />
-            <TextField label="Telefone" value={form.phone} onChange={(phone) => setForm({ ...form, phone })} required />
+            <p className={`text-xs ${documentIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
+              Use um CPF ou CNPJ válido.
+            </p>
+            <TextField
+              label="Telefone"
+              value={form.phone}
+              onChange={(phone) => setForm({ ...form, phone: maskBrazilPhone(phone) })}
+              required
+              inputMode="numeric"
+              placeholder="(11) 99999-9999"
+            />
+            <p className={`text-xs ${phoneIsValid ? 'text-[#66715f]' : 'text-[#9b321d]'}`}>
+              Use DDD+número, com 10 a 11 dígitos.
+            </p>
           </>
         )}
         <TextField label="E-mail" value={form.email} onChange={(email) => setForm({ ...form, email })} required type="email" />
@@ -88,7 +118,7 @@ export function AuthCard({ onAuthenticated }: AuthCardProps) {
 
         <button
           className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#21321d] px-4 text-sm font-semibold text-white transition hover:bg-[#314629] disabled:cursor-not-allowed disabled:opacity-70"
-          disabled={authMutation.isPending}
+          disabled={authMutation.isPending || !documentIsValid || !phoneIsValid}
         >
           {authMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
