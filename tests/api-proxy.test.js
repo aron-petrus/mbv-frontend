@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import test from 'node:test';
-import handler, { buildUpstreamUrl, getApiTarget } from '../api/[...path].js';
+import handler, { buildUpstreamUrl, getApiTarget } from '../api/proxy.js';
 
 test('uses the server-only API target before Vite variables', () => {
   assert.equal(
@@ -33,6 +33,17 @@ test('preserves a path prefix configured in the backend target', () => {
   assert.equal(
     buildUpstreamUrl('/api/auth/login', 'https://backend.example.com/v1').toString(),
     'https://backend.example.com/v1/auth/login',
+  );
+});
+
+test('uses the path supplied by the Vercel rewrite without leaking routing parameters', () => {
+  assert.equal(
+    buildUpstreamUrl(
+      '/api/proxy?api_path=auth%2Flogin&...path=ignored&source=test',
+      'https://backend.example.com',
+      'auth/login',
+    ).toString(),
+    'https://backend.example.com/auth/login?source=test',
   );
 });
 
@@ -75,7 +86,8 @@ test('forwards a login request and returns the backend response', async () => {
           host: 'frontend.example.com',
         },
         method: 'POST',
-        url: '/api/auth/login?source=test',
+        query: { api_path: 'auth/login' },
+        url: '/api/proxy?api_path=auth%2Flogin&source=test',
       },
       result.response,
     );

@@ -1,3 +1,5 @@
+const PROXY_PATH_PARAM = 'api_path';
+
 const HOP_BY_HOP_HEADERS = new Set([
   'accept-encoding',
   'connection',
@@ -23,12 +25,15 @@ export default async function handler(request, response) {
   }
 
   try {
-    const upstreamResponse = await fetch(buildUpstreamUrl(request.url, apiTarget), {
-      method: request.method,
-      headers: getUpstreamHeaders(request.headers),
-      body: getRequestBody(request),
-      redirect: 'manual',
-    });
+    const upstreamResponse = await fetch(
+      buildUpstreamUrl(request.url, apiTarget, request.query?.[PROXY_PATH_PARAM]),
+      {
+        method: request.method,
+        headers: getUpstreamHeaders(request.headers),
+        body: getRequestBody(request),
+        redirect: 'manual',
+      },
+    );
 
     response.status(upstreamResponse.status);
     copyResponseHeaders(upstreamResponse.headers, response);
@@ -58,13 +63,24 @@ export function getApiTarget(env = process.env) {
   }
 }
 
-export function buildUpstreamUrl(requestUrl, apiTarget) {
+export function buildUpstreamUrl(requestUrl, apiTarget, rewrittenPath) {
   const incomingUrl = new URL(requestUrl || '/api', 'https://vercel.local');
-  const apiPath = incomingUrl.pathname.replace(/^\/api\/?/, '');
+  const apiPath = normalizeRewrittenPath(rewrittenPath) || incomingUrl.pathname.replace(/^\/api\/?/, '');
   const targetBase = apiTarget.endsWith('/') ? apiTarget : `${apiTarget}/`;
   const upstreamUrl = new URL(apiPath, targetBase);
+
+  incomingUrl.searchParams.delete(PROXY_PATH_PARAM);
+  incomingUrl.searchParams.delete('...path');
   upstreamUrl.search = incomingUrl.search;
   return upstreamUrl;
+}
+
+function normalizeRewrittenPath(path) {
+  if (Array.isArray(path)) {
+    return path.join('/').replace(/^\/+/, '');
+  }
+
+  return typeof path === 'string' ? path.replace(/^\/+/, '') : '';
 }
 
 function getUpstreamHeaders(requestHeaders) {
