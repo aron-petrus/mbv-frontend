@@ -29,6 +29,16 @@ test('removes the public /api prefix and preserves path and query string', () =>
   );
 });
 
+test('preserves the identity route consumed by the shared production nginx', () => {
+  assert.equal(
+    buildUpstreamUrl(
+      '/api/identity/v1/auth/login',
+      'https://api.example.com',
+    ).toString(),
+    'https://api.example.com/identity/v1/auth/login',
+  );
+});
+
 test('preserves a path prefix configured in the backend target', () => {
   assert.equal(
     buildUpstreamUrl('/api/auth/login', 'https://backend.example.com/v1').toString(),

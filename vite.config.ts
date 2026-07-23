@@ -5,12 +5,18 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:3001';
+  const identityTarget = env.VITE_IDENTITY_PROXY_TARGET || 'http://localhost:3010';
 
   return {
     plugins: [react(), tailwindcss()],
     server: {
       port: 5173,
       proxy: {
+        '/api/identity': {
+          target: identityTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/identity/, ''),
+        },
         '/api': {
           target: apiTarget,
           changeOrigin: true,

@@ -9,7 +9,7 @@ import { WalletAddressPanel } from './WalletAddressPanel';
 type AccountPanelProps = {
   token: string;
   user: AuthUser | null;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   onUserUpdated: (user: AuthUser) => void;
 };
 

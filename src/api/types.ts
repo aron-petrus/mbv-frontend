@@ -2,15 +2,16 @@ export type AuthUser = {
   id: string;
   email: string;
   name: string;
-  document?: string;
-  phone?: string;
-  status?: string;
+  document: string;
+  phone: string;
+  status: 'active' | 'disabled' | 'blocked';
 };
 
 export type AuthResponse = {
   accessToken: string;
+  refreshToken: string;
   tokenType: string;
-  expiresIn: string;
+  expiresIn: number;
   user: AuthUser;
 };
 
